@@ -80,15 +80,15 @@ We will use 80-20 split for our data.
 > this model wasnt modified in any means.
 > > ![svm normal](./images/svm_normal.png)
 
-1. Balanced model.
+2. Balanced model.
 > this model had class weight set to balanced.
 > > ![svm balanced](./images/svm_balanced.png)
 
-1. OverSampled model.
+3. OverSampled model.
 > this was trained using oversampled data.
 > > ![svm oversampled](./images/svm_oversampled.png)
 
-1. UnderSampled model.
+4. UnderSampled model.
 > this trained using UnderSampled model.
 > > ![svm UnderSampled](./images/svm_undersampled.png)
 
@@ -100,18 +100,36 @@ We will use 80-20 split for our data.
 > this model wasnt modified in any means.
 > > ![RFC normal](./images/RFC_normal.png)
 
-1. Balanced model.
+2. Balanced model.
 > this model had class weight set to balanced.
 > > ![RFC balanced](./images/RFC_balanced.png)
 
-1. OverSampled model.
+3. OverSampled model.
 > this was trained using oversampled data.
 > > ![RFC oversampled](./images/RFC_oversampled.png)
 
-1. UnderSampled model.
+4. UnderSampled model.
 > this trained using UnderSampled model.
 > > ![RFC UnderSampled](./images/RFC_undersampled.png)
 
+
+### Logistic Regression:
+
+1. Baseline model.
+> this model wasnt modified in any means.
+> > ![LR normal](./images/LR_normal.png)
+
+2. Balanced model.
+> this model had class weight set to balanced.
+> > ![LR balanced](./images/LR_balanced.png)
+
+3. OverSampled model.
+> this was trained using oversampled data.
+> > ![LR oversampled](./images/LR_oversampled.png)
+
+4. UnderSampled model.
+> this trained using UnderSampled model.
+> > ![LR UnderSampled](./images/LR_undersampled.png)
 
 
 ## Metrics and Observations:
@@ -120,9 +138,12 @@ We will use 80-20 split for our data.
 
 ### Best Models:
 
-* SVM Balanced:
-
-* SVM Over sampled:
-
 * Random Forest Over sampled:
+	> Best model over all if over sampling is available.
+
+* SVM Balanced:
+	> Best model if over sampling data will be expensive.
+
+* SVM Over sampled.
+
 
