@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
+# In[101]:
 
 
 #!pip install nltk
@@ -58,18 +58,17 @@ if __name__ == "__main__":
     df.head()
 
 
-# In[2]:
+    # In[102]:
 
 
-# Drop unrelated columns
-if __name__ == "__main__":
+    # Drop unrelated columns
     df = df.drop(['date','variation','rating'],axis=1)
     df = df.drop_duplicates('verified_reviews')
     print(df.describe(include='all'))
     df.info()
 
 
-# In[5]:
+# In[118]:
 
 
 class ml_model():
@@ -80,7 +79,8 @@ class ml_model():
         if vectorizer == 'tfidf':
             self.vectorizer = TfidfVectorizer()
         elif vectorizer == 'word2vec':
-            self.vectorizer = gensim.models.Word2Vec()
+            self.vectorizer = gensim.models.Word2Vec(min_count=2,
+                     vector_size=5000)
             
         self.model_type = model
         if model == 'xgboost':
@@ -97,6 +97,7 @@ class ml_model():
         
         self.stopwords = set(stopwords.words('english'))
         self.stopwords.remove('not')
+        self.stopwords.add('')
 #         self.stopwords.remove('nor')
         
         
@@ -109,9 +110,12 @@ class ml_model():
         review = [re.sub("[^A-Za-z0-9]",' ',rev) for rev in review]
         review = [re.sub(r'[0-9]+',' ',rev) for rev in review]
         review = " ".join(WordNetLemmatizer().lemmatize(i) for i in review if i not in self.stopwords)
-    
-        return review
-    
+        
+        if self.vectorizer_type == 'tfidf':
+            return review
+        else:
+            return review.split()
+
     def preprocess(self, x):
         self.data = [self.clean_review(rev) for rev in x]
         
@@ -120,12 +124,19 @@ class ml_model():
     def vectorize_data(self, x):
         if self.vectorizer_type == 'tfidf':
             return self.vectorizer.transform(x)
+        elif self.vectorizer_type == 'word2vec':
+            x = [self.vectorizer.wv[i] for i in x]
+            return x
         
         
     def train(self, x, y):
         x = self.preprocess(x)
         
-        self.vectorizer.fit_transform(x)
+        if self.vectorizer_type == 'word2vec':
+            self.vectorizer.build_vocab(x, progress_per=10000)
+            self.vectorizer.train(x, total_examples=self.vectorizer.corpus_count, epochs=2)
+        else:
+            self.vectorizer.fit_transform(x)
         x = self.vectorize_data(x)
 #         self.oversample(x,y)
         
@@ -137,7 +148,7 @@ class ml_model():
     def oversample(self, x, y):
         return SMOTE().fit_resample(x,y)
         
-    def score(self, x_test, y_test):
+    def score(self, x_test, y_test,score=True):
         x_test = self.preprocess(x_test)
         
         x_test = self.vectorize_data(x_test)
@@ -147,12 +158,13 @@ class ml_model():
         else:
             y_pred = self.model.predict(x_test)
         
-        print(f'Confusion matrix: \n{confusion_matrix(y_test, y_pred)}\n')
-        print(f'The F1 score is: {f1_score(y_test, y_pred, average="macro")*100}')
-        print(f'The precision score is: {precision_score(y_test, y_pred, average="macro")*(100)}')
-        print(f'The recall score is: {recall_score(y_test, y_pred, average="macro")*100}') 
-        print(f'The accuracy score is: {accuracy_score(y_test, y_pred)*100}\n\n\n')
-        
+        if score:
+            print(f'Confusion matrix: \n{confusion_matrix(y_test, y_pred)}\n')
+            print(f'The F1 score is: {f1_score(y_test, y_pred, average="macro")*100}')
+            print(f'The precision score is: {precision_score(y_test, y_pred, average="macro")*(100)}')
+            print(f'The recall score is: {recall_score(y_test, y_pred, average="macro")*100}') 
+            print(f'The accuracy score is: {accuracy_score(y_test, y_pred)*100}\n\n\n')
+
         print(f'AUC score is: {roc_auc_score(y_test,y_pred)}')
         
         return y_pred
@@ -167,9 +179,10 @@ class ml_model():
     def get_params(self):
         return self.pipeline.get_params()
     
-    def draw_roc(self, x, y):
+    def draw_roc(self, x, y,score=False):
         
-        y_pred = self.score(x,y)
+        
+        y_pred = self.score(x,y,score)
         
         clf_fpr, clf_tpr, threshold = roc_curve(y, y_pred)
         auc_clf = auc(clf_fpr, clf_tpr)
@@ -186,48 +199,56 @@ class ml_model():
         
 
 
-# In[3]:
+# In[119]:
 
 if __name__ == "__main__":
     x_train, x_test ,y_train,y_test = train_test_split(df['verified_reviews'],df['feedback'],test_size=0.2,random_state=42, stratify=df['feedback'])
 
 
-# In[4]:
+# In[121]:
 
 
-    mymodel = ml_model('xgboost','tfidf')
-    mymodel.train(x_train, y_train)
+    mymodel1 = ml_model('xgboost','tfidf')
+    mymodel1.train(x_train, y_train)
+
+    mymodel2 = ml_model('svm', 'tfidf')
+    mymodel2.train(x_train, y_train)
 
 
-# In[746]:
+    # In[122]:
 
 
-    mymodel.draw_roc(x_test,y_test)
+    mymodel1.draw_roc(x_test,y_test)
+    mymodel2.draw_roc(x_test,y_test)
 
 
-# In[747]:
+    # In[128]:
 
 
-    print(mymodel.predict('terrible it'))
+    print(mymodel1.predict('love it'))
 
 
-# In[735]:
-
-    import pickle 
-    pickle.dump(mymodel, open('model', 'wb'))
-
-# In[736]:
+# In[129]:
 
 
+    import pickle
+
+    pickle.dump(mymodel1,open('model','wb'))
 
 
-# In[ ]:
+    # In[130]:
 
 
+    predict = pickle.load(open('model','rb'))
 
 
+    # In[132]:
 
-# In[ ]:
+
+    print(predict.predict('love it'))
+
+
+    # In[ ]:
 
 
 
